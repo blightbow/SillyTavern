@@ -364,6 +364,7 @@ export const settingsToUpdate = {
     openai_max_tokens: ['#openai_max_tokens', 'openai_max_tokens', false, false],
     names_behavior: ['#names_behavior', 'names_behavior', false, false],
     bypass_name_sanitization: ['#bypass_name_sanitization', 'bypass_name_sanitization', true, false],
+    use_assistant_partial: ['#use_assistant_partial', 'use_assistant_partial', true, false],
     send_if_empty: ['#send_if_empty_textarea', 'send_if_empty', false, false],
     impersonation_prompt: ['#impersonation_prompt_textarea', 'impersonation_prompt', false, false],
     new_chat_prompt: ['#newchat_prompt_textarea', 'new_chat_prompt', false, false],
@@ -505,6 +506,7 @@ const default_settings = {
     tool_call_recurse_limit: 5,
     names_behavior: character_names_behavior.DEFAULT,
     bypass_name_sanitization: false,
+    use_assistant_partial: false,
     continue_postfix: continue_postfix_types.SPACE,
     custom_prompt_post_processing: custom_prompt_post_processing_types.NONE,
     show_thoughts: true,
@@ -2875,6 +2877,7 @@ export async function createGenerationParameters(settings, model, type, messages
         generate_data.custom_include_body = settings.custom_include_body;
         generate_data.custom_exclude_body = settings.custom_exclude_body;
         generate_data.custom_include_headers = settings.custom_include_headers;
+        generate_data.use_assistant_partial = settings.use_assistant_partial;
     }
 
     if (settings.chat_completion_source === chat_completion_sources.COHERE) {
@@ -6978,6 +6981,11 @@ export function initOpenAI() {
 
     $('#bypass_name_sanitization').on('input', function () {
         oai_settings.bypass_name_sanitization = !!$(this).prop('checked');
+        saveSettingsDebounced();
+    });
+
+    $('#use_assistant_partial').on('input', function () {
+        oai_settings.use_assistant_partial = !!$(this).prop('checked');
         saveSettingsDebounced();
     });
 

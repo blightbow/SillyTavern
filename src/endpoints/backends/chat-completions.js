@@ -2329,6 +2329,9 @@ router.post('/generate', async function (request, response) {
                     },
                 };
             }
+            if (request.body.use_assistant_partial) {
+                addAssistantPrefix(request.body.messages, [], 'partial');
+            }
         } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.PERPLEXITY) {
             apiUrl = API_PERPLEXITY;
             apiKey = readSecret(request.user.directories, SECRET_KEYS.PERPLEXITY, request.body.secret_id);
