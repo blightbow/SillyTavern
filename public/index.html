@@ -1912,6 +1912,15 @@
                                                     Prepend character names to message contents.
                                                 </small>
                                             </label>
+                                            <div data-source="custom">
+                                                <label class="checkbox_label flexWrap alignItemsCenter" for="bypass_name_sanitization">
+                                                    <input type="checkbox" id="bypass_name_sanitization" />
+                                                    <span data-i18n="Bypass Name Sanitization">Bypass Name Sanitization</span>
+                                                    <small class="flexBasis100p" data-i18n="bypass_name_sanitization_desc">
+                                                        Skip OpenAI name field restrictions for non-ASCII character names. Enabling this may cause API servers to throw errors if they validate against the OpenAI schema.
+                                                    </small>
+                                                </label>
+                                            </div>
                                             <!-- Hidden input for loading radio buttons from presets. Don't remove! -->
                                             <input type="hidden" id="names_behavior" class="displayNone" />
                                         </div>

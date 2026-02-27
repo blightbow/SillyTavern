@@ -208,6 +208,16 @@ const character_names_behavior = {
     CONTENT: 2,
 };
 
+function shouldBypassNameSanitization() {
+    if (oai_settings.chat_completion_source === chat_completion_sources.MOONSHOT) {
+        return true;
+    }
+    if (oai_settings.chat_completion_source === chat_completion_sources.CUSTOM && oai_settings.bypass_name_sanitization) {
+        return true;
+    }
+    return false;
+}
+
 const continue_postfix_types = {
     NONE: '',
     SPACE: ' ',
@@ -353,6 +363,7 @@ export const settingsToUpdate = {
     openai_max_context: ['#openai_max_context', 'openai_max_context', false, false],
     openai_max_tokens: ['#openai_max_tokens', 'openai_max_tokens', false, false],
     names_behavior: ['#names_behavior', 'names_behavior', false, false],
+    bypass_name_sanitization: ['#bypass_name_sanitization', 'bypass_name_sanitization', true, false],
     send_if_empty: ['#send_if_empty_textarea', 'send_if_empty', false, false],
     impersonation_prompt: ['#impersonation_prompt_textarea', 'impersonation_prompt', false, false],
     new_chat_prompt: ['#newchat_prompt_textarea', 'new_chat_prompt', false, false],
@@ -493,6 +504,7 @@ const default_settings = {
     function_calling: false,
     tool_call_recurse_limit: 5,
     names_behavior: character_names_behavior.DEFAULT,
+    bypass_name_sanitization: false,
     continue_postfix: continue_postfix_types.SPACE,
     custom_prompt_post_processing: custom_prompt_post_processing_types.NONE,
     show_thoughts: true,
@@ -946,7 +958,9 @@ async function populateChatHistory(messages, prompts, chatCompletion, type = nul
         const chatMessage = await Message.fromPromptAsync(promptManager.preparePrompt(prompt));
 
         if (promptManager.serviceSettings.names_behavior === character_names_behavior.COMPLETION && prompt.name) {
-            const messageName = promptManager.isValidName(prompt.name) ? prompt.name : promptManager.sanitizeName(prompt.name);
+            const messageName = shouldBypassNameSanitization()
+                ? prompt.name
+                : (promptManager.isValidName(prompt.name) ? prompt.name : promptManager.sanitizeName(prompt.name));
             await chatMessage.setName(messageName);
         }
 
@@ -1316,7 +1330,9 @@ async function populateChatCompletion(prompts, chatCompletion, { bias, quietProm
         const assistantPrefill = isAssistantRole && supportsAssistantPrefill ? substituteParams(oai_settings.assistant_prefill) : '';
         const messageContent = [assistantPrefill, chatMessage.content].filter(x => x).join('\n\n');
         const continueMessage = await Message.createAsync(chatMessage.role, messageContent, 'continuePrefill');
-        chatMessage.name && namesInCompletion && await continueMessage.setName(promptManager.sanitizeName(chatMessage.name));
+        chatMessage.name && namesInCompletion && await continueMessage.setName(
+            shouldBypassNameSanitization() ? chatMessage.name : promptManager.sanitizeName(chatMessage.name),
+        );
         controlPrompts.add(continueMessage);
         chatCompletion.reserveBudget(continueMessage);
     }
@@ -6957,6 +6973,11 @@ export function initOpenAI() {
     $('#names_behavior').on('input', function () {
         oai_settings.names_behavior = Number($(this).val());
         setNamesBehaviorControls();
+        saveSettingsDebounced();
+    });
+
+    $('#bypass_name_sanitization').on('input', function () {
+        oai_settings.bypass_name_sanitization = !!$(this).prop('checked');
         saveSettingsDebounced();
     });
 
