@@ -1926,7 +1926,7 @@
                                                     <input type="checkbox" id="use_assistant_partial" />
                                                     <span data-i18n="Partial Mode">Partial Mode</span>
                                                     <small class="flexBasis100p" data-i18n="use_assistant_partial_desc">
-                                                        Disables add_generation_prompt and treats the last assistant message as a prefill for continue_final_message. Only supported by Moonshot-compatible APIs.
+                                                        Appends an assistant message with partial: true, disabling add_generation_prompt in favor of continue_final_message. Use with Completion Objects to preserve character names in the chat template. Only supported by Moonshot-compatible APIs.
                                                     </small>
                                                 </label>
                                             </div>

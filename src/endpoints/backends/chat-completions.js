@@ -2330,6 +2330,15 @@ router.post('/generate', async function (request, response) {
                 };
             }
             if (request.body.use_assistant_partial) {
+                if (Array.isArray(request.body.messages) && request.body.messages.length > 0
+                    && request.body.messages[request.body.messages.length - 1].role !== 'assistant') {
+                    const lastAssistant = request.body.messages.findLast(m => m.role === 'assistant');
+                    const emptyMessage = { role: 'assistant', content: '' };
+                    if (lastAssistant?.name) {
+                        emptyMessage.name = lastAssistant.name;
+                    }
+                    request.body.messages.push(emptyMessage);
+                }
                 addAssistantPrefix(request.body.messages, [], 'partial');
             }
         } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.PERPLEXITY) {
