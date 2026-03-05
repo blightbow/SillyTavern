@@ -2333,7 +2333,13 @@ router.post('/generate', async function (request, response) {
                 if (Array.isArray(request.body.messages) && request.body.messages.length > 0
                     && request.body.messages[request.body.messages.length - 1].role !== 'assistant') {
                     const lastAssistant = request.body.messages.findLast(m => m.role === 'assistant');
-                    const emptyMessage = { role: 'assistant', content: '' };
+                    let partialContent = '';
+                    if (request.body.partial_prefill === 'thinking' && request.body.include_reasoning) {
+                        partialContent = '<think>';
+                    } else if (request.body.partial_prefill === 'custom') {
+                        partialContent = request.body.partial_prefill_custom || '';
+                    }
+                    const emptyMessage = { role: 'assistant', content: partialContent };
                     if (lastAssistant?.name) {
                         emptyMessage.name = lastAssistant.name;
                     }

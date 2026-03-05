@@ -381,6 +381,8 @@ export const settingsToUpdate = {
     names_behavior: ['#names_behavior', 'names_behavior', false, false],
     bypass_name_sanitization: ['#bypass_name_sanitization', 'bypass_name_sanitization', true, false],
     use_assistant_partial: ['#use_assistant_partial', 'use_assistant_partial', true, false],
+    partial_prefill: ['#partial_prefill', 'partial_prefill', false, false],
+    partial_prefill_custom: ['#partial_prefill_custom', 'partial_prefill_custom', false, false],
     name_override_user: ['#name_override_user', 'name_override_user', false, false],
     name_override_assistant: ['#name_override_assistant', 'name_override_assistant', false, false],
     name_override_system: ['#name_override_system', 'name_override_system', false, false],
@@ -527,6 +529,8 @@ const default_settings = {
     names_behavior: character_names_behavior.DEFAULT,
     bypass_name_sanitization: false,
     use_assistant_partial: false,
+    partial_prefill: 'thinking',
+    partial_prefill_custom: '',
     name_override_user: '',
     name_override_assistant: '',
     name_override_system: '',
@@ -2906,6 +2910,8 @@ export async function createGenerationParameters(settings, model, type, messages
         generate_data.custom_exclude_body = settings.custom_exclude_body;
         generate_data.custom_include_headers = settings.custom_include_headers;
         generate_data.use_assistant_partial = settings.use_assistant_partial;
+        generate_data.partial_prefill = settings.partial_prefill;
+        generate_data.partial_prefill_custom = settings.partial_prefill_custom;
     }
 
     if (settings.chat_completion_source === chat_completion_sources.COHERE) {
@@ -4340,6 +4346,7 @@ function loadOpenAISettings(data, settings) {
     $('#openai_logit_bias_preset').trigger('change');
 
     setNamesBehaviorControls();
+    setPartialPrefillControls();
     setContinuePostfixControls();
     setToolReasoningControls();
     ToolManager.RECURSE_LIMIT = oai_settings.tool_call_recurse_limit;
@@ -4368,6 +4375,26 @@ function setNamesBehaviorControls() {
 
     const checkedItemText = $('input[name="character_names"]:checked ~ span').text().trim();
     $('#character_names_display').text(checkedItemText);
+}
+
+function setPartialPrefillControls() {
+    switch (oai_settings.partial_prefill) {
+        case 'thinking':
+            $('#partial_prefill_thinking').prop('checked', true);
+            break;
+        case 'custom':
+            $('#partial_prefill_custom_radio').prop('checked', true);
+            break;
+        case 'none':
+            $('#partial_prefill_none').prop('checked', true);
+            break;
+        default:
+            oai_settings.partial_prefill = 'thinking';
+            $('#partial_prefill_thinking').prop('checked', true);
+            break;
+    }
+    $('#partial_prefill').val(oai_settings.partial_prefill);
+    $('#partial_prefill_custom_field').toggle(oai_settings.partial_prefill === 'custom');
 }
 
 function setContinuePostfixControls() {
@@ -7014,6 +7041,29 @@ export function initOpenAI() {
 
     $('#use_assistant_partial').on('input', function () {
         oai_settings.use_assistant_partial = !!$(this).prop('checked');
+        saveSettingsDebounced();
+    });
+
+    $('#partial_prefill_thinking').on('input', function () {
+        oai_settings.partial_prefill = 'thinking';
+        setPartialPrefillControls();
+        saveSettingsDebounced();
+    });
+
+    $('#partial_prefill_custom_radio').on('input', function () {
+        oai_settings.partial_prefill = 'custom';
+        setPartialPrefillControls();
+        saveSettingsDebounced();
+    });
+
+    $('#partial_prefill_none').on('input', function () {
+        oai_settings.partial_prefill = 'none';
+        setPartialPrefillControls();
+        saveSettingsDebounced();
+    });
+
+    $('#partial_prefill_custom').on('input', function () {
+        oai_settings.partial_prefill_custom = String($(this).val());
         saveSettingsDebounced();
     });
 

@@ -1944,6 +1944,39 @@
                                                         the chat template. Only supported by Moonshot-compatible APIs.
                                                     </small>
                                                 </label>
+                                                <div class="marginTopBot5">
+                                                    <h4 data-i18n="Partial Prefill">Partial Prefill</h4>
+                                                    <small data-i18n="partial_prefill_desc">
+                                                        Content to inject in the partial assistant message.
+                                                        Only applies when Partial Mode is enabled.
+                                                    </small>
+                                                    <label class="checkbox_label flexWrap alignItemsCenter" for="partial_prefill_thinking">
+                                                        <input type="radio" id="partial_prefill_thinking" name="partial_prefill" value="thinking">
+                                                        <span data-i18n="Preserve Thinking">Preserve Thinking</span>
+                                                        <small class="flexBasis100p" data-i18n="partial_prefill_thinking_desc">
+                                                            Injects &lt;think&gt; when Thinking is enabled.
+                                                            Preserves the thinking block in the response.
+                                                            Falls back to empty when Thinking is off.
+                                                        </small>
+                                                    </label>
+                                                    <label class="checkbox_label flexWrap alignItemsCenter" for="partial_prefill_custom_radio">
+                                                        <input type="radio" id="partial_prefill_custom_radio" name="partial_prefill" value="custom">
+                                                        <span data-i18n="Custom">Custom</span>
+                                                    </label>
+                                                    <div id="partial_prefill_custom_field" class="marginTopBot5" style="display: none;">
+                                                        <input id="partial_prefill_custom" type="text" class="text_pole wide100p"
+                                                               data-i18n="[placeholder]Enter prefill text"
+                                                               placeholder="Enter prefill text" maxlength="256" />
+                                                    </div>
+                                                    <label class="checkbox_label flexWrap alignItemsCenter" for="partial_prefill_none">
+                                                        <input type="radio" id="partial_prefill_none" name="partial_prefill" value="none">
+                                                        <span data-i18n="None">None</span>
+                                                        <small class="flexBasis100p" data-i18n="partial_prefill_none_desc">
+                                                            Empty partial message (original behavior).
+                                                        </small>
+                                                    </label>
+                                                    <input type="hidden" id="partial_prefill" class="displayNone" />
+                                                </div>
                                                 <hr>
                                                 <h4 data-i18n="Name Overrides">Name Overrides</h4>
                                                 <small data-i18n="name_overrides_desc">
