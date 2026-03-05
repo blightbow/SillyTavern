@@ -218,6 +218,22 @@ function shouldBypassNameSanitization() {
     return false;
 }
 
+function getNameOverrideForRole(role) {
+    switch (role) {
+        case 'user':
+            return oai_settings.name_override_user?.trim() || '';
+        case 'assistant':
+            if (selected_group && !oai_settings.name_override_group) {
+                return '';
+            }
+            return oai_settings.name_override_assistant?.trim() || '';
+        case 'system':
+            return oai_settings.name_override_system?.trim() || '';
+        default:
+            return '';
+    }
+}
+
 const continue_postfix_types = {
     NONE: '',
     SPACE: ' ',
@@ -365,6 +381,10 @@ export const settingsToUpdate = {
     names_behavior: ['#names_behavior', 'names_behavior', false, false],
     bypass_name_sanitization: ['#bypass_name_sanitization', 'bypass_name_sanitization', true, false],
     use_assistant_partial: ['#use_assistant_partial', 'use_assistant_partial', true, false],
+    name_override_user: ['#name_override_user', 'name_override_user', false, false],
+    name_override_assistant: ['#name_override_assistant', 'name_override_assistant', false, false],
+    name_override_system: ['#name_override_system', 'name_override_system', false, false],
+    name_override_group: ['#name_override_group', 'name_override_group', true, false],
     send_if_empty: ['#send_if_empty_textarea', 'send_if_empty', false, false],
     impersonation_prompt: ['#impersonation_prompt_textarea', 'impersonation_prompt', false, false],
     new_chat_prompt: ['#newchat_prompt_textarea', 'new_chat_prompt', false, false],
@@ -507,6 +527,10 @@ const default_settings = {
     names_behavior: character_names_behavior.DEFAULT,
     bypass_name_sanitization: false,
     use_assistant_partial: false,
+    name_override_user: '',
+    name_override_assistant: '',
+    name_override_system: '',
+    name_override_group: false,
     continue_postfix: continue_postfix_types.SPACE,
     custom_prompt_post_processing: custom_prompt_post_processing_types.NONE,
     show_thoughts: true,
@@ -959,11 +983,15 @@ async function populateChatHistory(messages, prompts, chatCompletion, type = nul
         prompt.identifier = `chatHistory-${messages.length - index}`;
         const chatMessage = await Message.fromPromptAsync(promptManager.preparePrompt(prompt));
 
-        if (promptManager.serviceSettings.names_behavior === character_names_behavior.COMPLETION && prompt.name) {
-            const messageName = shouldBypassNameSanitization()
-                ? prompt.name
-                : (promptManager.isValidName(prompt.name) ? prompt.name : promptManager.sanitizeName(prompt.name));
-            await chatMessage.setName(messageName);
+        if (promptManager.serviceSettings.names_behavior === character_names_behavior.COMPLETION) {
+            const nameOverride = getNameOverrideForRole(chatMessage.role);
+            const rawName = nameOverride || prompt.name;
+            if (rawName) {
+                const messageName = shouldBypassNameSanitization()
+                    ? rawName
+                    : (promptManager.isValidName(rawName) ? rawName : promptManager.sanitizeName(rawName));
+                await chatMessage.setName(messageName);
+            }
         }
 
         /**
@@ -6986,6 +7014,26 @@ export function initOpenAI() {
 
     $('#use_assistant_partial').on('input', function () {
         oai_settings.use_assistant_partial = !!$(this).prop('checked');
+        saveSettingsDebounced();
+    });
+
+    $('#name_override_user').on('input', function () {
+        oai_settings.name_override_user = String($(this).val());
+        saveSettingsDebounced();
+    });
+
+    $('#name_override_assistant').on('input', function () {
+        oai_settings.name_override_assistant = String($(this).val());
+        saveSettingsDebounced();
+    });
+
+    $('#name_override_system').on('input', function () {
+        oai_settings.name_override_system = String($(this).val());
+        saveSettingsDebounced();
+    });
+
+    $('#name_override_group').on('input', function () {
+        oai_settings.name_override_group = !!$(this).prop('checked');
         saveSettingsDebounced();
     });
 

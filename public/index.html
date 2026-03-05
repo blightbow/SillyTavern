@@ -1912,26 +1912,68 @@
                                                     Prepend character names to message contents.
                                                 </small>
                                             </label>
-                                            <div data-source="custom">
+                                            <!-- Hidden input for loading radio buttons from presets. Don't remove! -->
+                                            <input type="hidden" id="names_behavior" class="displayNone" />
+                                        </div>
+                                    </div>
+                                    <div data-source="custom">
+                                        <div class="inline-drawer wide100p flexFlowColumn">
+                                            <div class="inline-drawer-toggle inline-drawer-header">
+                                                <div class="flex-container alignItemsCenter">
+                                                    <b data-i18n="Custom Completion Settings">Custom Completion Settings</b>
+                                                </div>
+                                                <div class="fa-solid fa-circle-chevron-down inline-drawer-icon down"></div>
+                                            </div>
+                                            <div class="inline-drawer-content">
                                                 <label class="checkbox_label flexWrap alignItemsCenter" for="bypass_name_sanitization">
                                                     <input type="checkbox" id="bypass_name_sanitization" />
                                                     <span data-i18n="Bypass Name Sanitization">Bypass Name Sanitization</span>
                                                     <small class="flexBasis100p" data-i18n="bypass_name_sanitization_desc">
-                                                        Skip character name restrictions for Completion Objects. Enabling this may cause API servers to throw errors if they validate against the OpenAI schema.
+                                                        Skip character name restrictions for Completion Objects.
+                                                        Enabling this may cause API servers to throw errors if
+                                                        they validate against the OpenAI schema.
                                                     </small>
                                                 </label>
-                                            </div>
-                                            <div data-source="custom">
                                                 <label class="checkbox_label flexWrap alignItemsCenter" for="use_assistant_partial">
                                                     <input type="checkbox" id="use_assistant_partial" />
                                                     <span data-i18n="Partial Mode">Partial Mode</span>
                                                     <small class="flexBasis100p" data-i18n="use_assistant_partial_desc">
-                                                        Appends an assistant message with partial: true, disabling add_generation_prompt in favor of continue_final_message. Use with Completion Objects to preserve character names in the chat template. Only supported by Moonshot-compatible APIs.
+                                                        Appends an assistant message with partial: true, disabling
+                                                        add_generation_prompt in favor of continue_final_message.
+                                                        Use with Completion Objects to preserve character names in
+                                                        the chat template. Only supported by Moonshot-compatible APIs.
                                                     </small>
                                                 </label>
+                                                <hr>
+                                                <h4 data-i18n="Name Overrides">Name Overrides</h4>
+                                                <small data-i18n="name_overrides_desc">
+                                                    Override the name field on completion objects per role.
+                                                    Only applies when using Completion Object mode.
+                                                    Leave empty to use the default name.
+                                                </small>
+                                                <div class="marginTopBot5">
+                                                    <label for="name_override_user" data-i18n="User Name">User Name</label>
+                                                    <input id="name_override_user" type="text" class="text_pole wide100p"
+                                                           data-i18n="[placeholder]Leave empty for default"
+                                                           placeholder="Leave empty for default" maxlength="64" />
+                                                </div>
+                                                <div class="marginTopBot5">
+                                                    <label for="name_override_assistant" data-i18n="Character Name">Character Name</label>
+                                                    <input id="name_override_assistant" type="text" class="text_pole wide100p"
+                                                           data-i18n="[placeholder]Leave empty for default"
+                                                           placeholder="Leave empty for default" maxlength="64" />
+                                                    <label class="checkbox_label" for="name_override_group">
+                                                        <input type="checkbox" id="name_override_group" />
+                                                        <span data-i18n="Apply to group chats">Apply to group chats</span>
+                                                    </label>
+                                                </div>
+                                                <div class="marginTopBot5">
+                                                    <label for="name_override_system" data-i18n="System Name">System Name</label>
+                                                    <input id="name_override_system" type="text" class="text_pole wide100p"
+                                                           data-i18n="[placeholder]Leave empty for default"
+                                                           placeholder="Leave empty for default" maxlength="64" />
+                                                </div>
                                             </div>
-                                            <!-- Hidden input for loading radio buttons from presets. Don't remove! -->
-                                            <input type="hidden" id="names_behavior" class="displayNone" />
                                         </div>
                                     </div>
                                     <div class="inline-drawer wide100p flexFlowColumn marginBot10">
