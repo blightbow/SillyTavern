@@ -4434,12 +4434,6 @@ function setPartialPrefillControls() {
             break;
     }
     $('#partial_prefill').val(oai_settings.partial_prefill);
-    const isCustom = oai_settings.partial_prefill === 'custom';
-    $('#partial_prefill_custom_field').toggle(isCustom);
-    // A hidden textarea has no scroll height, so size it once it is visible.
-    if (isCustom) {
-        resetScrollHeight($('#partial_prefill_custom'));
-    }
 }
 
 /** @type {boolean} Whether the active Partial Mode conflict has already been reported. */

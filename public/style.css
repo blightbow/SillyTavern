@@ -5780,6 +5780,12 @@ body:not(.movingUI) .drawer-content.maximized {
     margin-top: 0.5rem;
 }
 
+/* autoSetHeight sizes to content, which renders an empty field as one row.
+   Under border-box the floor also has to cover .text_pole padding and border. */
+#partial_prefill_custom {
+    min-height: calc(3lh + 8px);
+}
+
 .openai_logit_bias_preset_form select {
     flex: 1;
 }
