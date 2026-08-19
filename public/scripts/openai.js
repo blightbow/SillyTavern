@@ -77,6 +77,7 @@ import { renderTemplateAsync } from './templates.js';
 import { SlashCommandEnumValue } from './slash-commands/SlashCommandEnumValue.js';
 import { callGenericPopup, Popup, POPUP_RESULT, POPUP_TYPE } from './popup.js';
 import { t } from './i18n.js';
+import { PromptReasoning } from './reasoning.js';
 import { ToolManager } from './tool-calling.js';
 import { accountStorage } from './util/AccountStorage.js';
 import { COMETAPI_IGNORE_PATTERNS, IGNORE_SYMBOL, MEDIA_DISPLAY, MEDIA_TYPE } from './constants.js';
@@ -2684,6 +2685,46 @@ function getVerbosity(settings = null) {
 }
 
 /**
+ * Resolves the text that the partial assistant message is prefilled with.
+ *
+ * Resolution happens here rather than on the server because the reasoning prefix
+ * is a client-side setting, and because opening a reasoning block has to be
+ * recorded for the parser that reads the response back.
+ * @param {object} settings Chat completion settings
+ * @param {object[]} messages Messages being sent
+ * @param {string} type Generation type
+ * @returns {string} Prefill content, empty string if none applies
+ */
+function resolvePartialPrefill(settings, messages, type) {
+    if (!settings.use_assistant_partial) {
+        return '';
+    }
+
+    if (settings.partial_prefill === 'custom') {
+        return settings.partial_prefill_custom || '';
+    }
+
+    if (settings.partial_prefill !== 'thinking' || !settings.show_thoughts) {
+        return '';
+    }
+
+    const prefix = substituteParams(power_user.reasoning.prefix || '');
+
+    // The server appends the prefill only when the last message is not already an
+    // assistant turn, and a quiet generation never reaches the reasoning parser.
+    const isPrefilled = type !== 'quiet'
+        && Array.isArray(messages)
+        && messages.length > 0
+        && messages[messages.length - 1].role !== 'assistant';
+
+    if (prefix && isPrefilled) {
+        PromptReasoning.setPrefilledReasoning(prefix);
+    }
+
+    return prefix;
+}
+
+/**
  * Build the generation parameter object for an OAI request.
  * @param {ChatCompletionSettings} settings Initial chat completion settings
  * @param {string} model Model name
@@ -2910,8 +2951,7 @@ export async function createGenerationParameters(settings, model, type, messages
         generate_data.custom_exclude_body = settings.custom_exclude_body;
         generate_data.custom_include_headers = settings.custom_include_headers;
         generate_data.use_assistant_partial = settings.use_assistant_partial;
-        generate_data.partial_prefill = settings.partial_prefill;
-        generate_data.partial_prefill_custom = settings.partial_prefill_custom;
+        generate_data.partial_prefill_content = resolvePartialPrefill(settings, messages, type);
     }
 
     if (settings.chat_completion_source === chat_completion_sources.COHERE) {

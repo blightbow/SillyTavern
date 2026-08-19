@@ -678,6 +678,28 @@ export class PromptReasoning {
         PromptReasoning.#LATEST = null;
     }
 
+    /**
+     * Records a reasoning prefix that was sent to the API as a prefill.
+     * The model continues from the prefill, so the response arrives without the
+     * opening sequence and has to be parsed as if the block were still open,
+     * exactly like an unfinished reasoning block that is being continued.
+     * @param {string} formattedPrefix Reasoning prefix sent to the API
+     */
+    static setPrefilledReasoning(formattedPrefix) {
+        const latest = PromptReasoning.#LATEST;
+
+        // An unfinished block being continued already carries its own prefix.
+        if (!latest || !formattedPrefix || latest.prefixIncomplete) {
+            return;
+        }
+
+        latest.prefixReasoning = '';
+        latest.prefixReasoningFormatted = formattedPrefix;
+        latest.prefixIncomplete = true;
+        // prefixLength is deliberately left unset: removePrefix() trims content
+        // that was echoed back by a continue, and a prefill never is.
+    }
+
     constructor() {
         PromptReasoning.#LATEST = this;
 
