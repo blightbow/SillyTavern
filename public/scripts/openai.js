@@ -4402,6 +4402,35 @@ function setPartialPrefillControls() {
     }
 }
 
+/** @type {boolean} Whether the active Partial Mode conflict has already been reported. */
+let partialPrefillConflictWarned = false;
+
+/**
+ * Warns that Partial Mode and Start Reply With cannot be used together.
+ * Start Reply With is sent as a trailing assistant message, which occupies the
+ * slot the partial prefill would take and suppresses it. Fires once per conflict.
+ */
+function checkPartialPrefillConflict() {
+    const hasConflict = oai_settings.chat_completion_source === chat_completion_sources.CUSTOM
+        && oai_settings.use_assistant_partial
+        && !!power_user.user_prompt_bias?.trim();
+
+    if (!hasConflict) {
+        partialPrefillConflictWarned = false;
+        return;
+    }
+
+    if (partialPrefillConflictWarned) {
+        return;
+    }
+
+    partialPrefillConflictWarned = true;
+    toastr.warning(
+        t`Start Reply With is sent as a trailing assistant message, which replaces the partial prefill.`,
+        t`Partial Mode is incompatible with Start Reply With`,
+    );
+}
+
 function setContinuePostfixControls() {
     switch (oai_settings.continue_postfix) {
         case continue_postfix_types.NONE:
@@ -7046,7 +7075,13 @@ export function initOpenAI() {
 
     $('#use_assistant_partial').on('input', function () {
         oai_settings.use_assistant_partial = !!$(this).prop('checked');
+        checkPartialPrefillConflict();
         saveSettingsDebounced();
+    });
+
+    // Delegated so it runs after the direct handler in power-user.js has stored the new value.
+    $(document).on('input', '#start_reply_with', function () {
+        checkPartialPrefillConflict();
     });
 
     $('#partial_prefill_thinking').on('input', function () {
