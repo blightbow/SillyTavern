@@ -2685,11 +2685,49 @@ function getVerbosity(settings = null) {
 }
 
 /**
- * Resolves the text that the partial assistant message is prefilled with.
+ * Splits a partial-mode prefill into the parts bound for the reasoning panel
+ * and for the message body.
  *
- * Resolution happens here rather than on the server because the reasoning prefix
- * is a client-side setting, and because opening a reasoning block has to be
- * recorded for the parser that reads the response back.
+ * A prefill that leaves a reasoning block open is continued inside that block,
+ * so everything after the opening sequence is reasoning. Text before it, or a
+ * prefill that opens no block at all, is message text.
+ * @param {string} prefill Resolved prefill text
+ * @returns {{reasoning: string, content: string}} Prefill split by destination
+ */
+function splitPartialPrefill(prefill) {
+    const prefix = substituteParams(power_user.reasoning.prefix || '');
+    const suffix = substituteParams(power_user.reasoning.suffix || '');
+    const lastOpen = prefix ? prefill.lastIndexOf(prefix) : -1;
+
+    if (lastOpen < 0) {
+        return { reasoning: '', content: prefill };
+    }
+
+    const afterOpen = prefill.slice(lastOpen + prefix.length);
+    const closeAt = suffix ? afterOpen.indexOf(suffix) : -1;
+
+    // Block left open: the model continues the reasoning, so the rest of the
+    // prefill is the start of it.
+    if (closeAt < 0) {
+        return { reasoning: afterOpen, content: prefill.slice(0, lastOpen) };
+    }
+
+    // Block closed within the prefill: the reasoning is already complete and
+    // the model continues the body instead.
+    return {
+        reasoning: afterOpen.slice(0, closeAt),
+        content: prefill.slice(0, lastOpen) + afterOpen.slice(closeAt + suffix.length),
+    };
+}
+
+/**
+ * Resolves the text the partial assistant message is prefilled with, and
+ * records it so the reply can be rendered with it.
+ *
+ * Partial mode returns only the continuation, so the prefill is never echoed
+ * back and the client is responsible for concatenating it onto the reply.
+ * Resolution happens here rather than on the server because the reasoning
+ * prefix is a client-side setting.
  * @param {object} settings Chat completion settings
  * @param {object[]} messages Messages being sent
  * @param {string} type Generation type
@@ -2700,28 +2738,26 @@ function resolvePartialPrefill(settings, messages, type) {
         return '';
     }
 
+    let prefill = '';
     if (settings.partial_prefill === 'custom') {
-        return settings.partial_prefill_custom || '';
+        prefill = settings.partial_prefill_custom || '';
+    } else if (settings.partial_prefill === 'thinking' && settings.show_thoughts) {
+        prefill = substituteParams(power_user.reasoning.prefix || '');
     }
 
-    if (settings.partial_prefill !== 'thinking' || !settings.show_thoughts) {
-        return '';
-    }
-
-    const prefix = substituteParams(power_user.reasoning.prefix || '');
-
-    // The server appends the prefill only when the last message is not already an
-    // assistant turn, and a quiet generation never reaches the reasoning parser.
-    const isPrefilled = type !== 'quiet'
+    // The server appends the prefill only when the last message is not already
+    // an assistant turn, and a quiet generation is never rendered as a reply.
+    const isRendered = type !== 'quiet'
         && Array.isArray(messages)
         && messages.length > 0
         && messages[messages.length - 1].role !== 'assistant';
 
-    if (prefix && isPrefilled) {
-        PromptReasoning.setPrefilledReasoning(prefix);
+    if (prefill && isRendered) {
+        const { reasoning, content } = splitPartialPrefill(prefill);
+        PromptReasoning.setPartialPrefill(reasoning, content);
     }
 
-    return prefix;
+    return prefill;
 }
 
 /**

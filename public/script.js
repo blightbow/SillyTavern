@@ -3830,7 +3830,7 @@ class StreamingProcessor {
                     this.messageLogprobs.push(...(Array.isArray(logprobs) ? logprobs : [logprobs]));
                 }
                 // Get the updated reasoning string into the handler
-                this.reasoningHandler.updateReasoning(this.messageId, state?.reasoning);
+                this.reasoningHandler.updateReasoning(this.messageId, this.promptReasoning.partialPrefillReasoning + (state?.reasoning ?? ''));
                 this.images = state?.images ?? [];
                 this.reasoningSignature = state?.signature ?? null;
                 await eventSource.emit(event_types.STREAM_TOKEN_RECEIVED, text);
@@ -5426,7 +5426,7 @@ export async function Generate(type, { automatic_trigger, force_name2, quiet_pro
         //const getData = await response.json();
         let getMessage = extractMessageFromData(data);
         let title = extractTitleFromData(data);
-        let reasoning = extractReasoningFromData(data);
+        let reasoning = promptReasoning.partialPrefillReasoning + extractReasoningFromData(data);
         let imageUrls = extractImagesFromData(data);
         const reasoningSignature = extractReasoningSignatureFromData(data);
         kobold_horde_model = title;
@@ -6399,6 +6399,15 @@ export function cleanUpMessage({ getMessage, isImpersonate, isContinue, displayI
         power_user.user_prompt_bias.length !== 0
     ) {
         getMessage = substituteParams(power_user.user_prompt_bias) + getMessage;
+    }
+
+    // Partial mode returns only the continuation, so the prefill that was sent
+    // with the request is restored here to make the reply read as one message.
+    if (includeUserPromptBias && !isImpersonate && !isContinue) {
+        const partialPrefill = PromptReasoning.getLatestPartialPrefillContent();
+        if (partialPrefill) {
+            getMessage = partialPrefill + getMessage;
+        }
     }
 
     // Allow for caching of stopping strings. getStoppingStrings is an expensive function, especially with macros

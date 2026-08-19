@@ -679,25 +679,33 @@ export class PromptReasoning {
     }
 
     /**
-     * Records a reasoning prefix that was sent to the API as a prefill.
-     * The model continues from the prefill, so the response arrives without the
-     * opening sequence and has to be parsed as if the block were still open,
-     * exactly like an unfinished reasoning block that is being continued.
-     * @param {string} formattedPrefix Reasoning prefix sent to the API
+     * Records the text a partial-mode prefill contributed to this request.
+     *
+     * Partial mode returns only the continuation, so the prefill never comes
+     * back in the response and the client concatenates it onto the reply
+     * itself. Reasoning and message text are kept apart because a prefill that
+     * leaves a reasoning block open belongs in the reasoning panel, while
+     * anything outside that block belongs in the message body.
+     * @param {string} reasoning Prefill text inside an open reasoning block
+     * @param {string} content Prefill text outside any reasoning block
      */
-    static setPrefilledReasoning(formattedPrefix) {
+    static setPartialPrefill(reasoning, content) {
         const latest = PromptReasoning.#LATEST;
 
-        // An unfinished block being continued already carries its own prefix.
-        if (!latest || !formattedPrefix || latest.prefixIncomplete) {
+        if (!latest) {
             return;
         }
 
-        latest.prefixReasoning = '';
-        latest.prefixReasoningFormatted = formattedPrefix;
-        latest.prefixIncomplete = true;
-        // prefixLength is deliberately left unset: removePrefix() trims content
-        // that was echoed back by a continue, and a prefill never is.
+        latest.partialPrefillReasoning = reasoning || '';
+        latest.partialPrefillContent = content || '';
+    }
+
+    /**
+     * Returns the message text contributed by the latest partial-mode prefill.
+     * @returns {string} Prefill text to prepend to the reply body
+     */
+    static getLatestPartialPrefillContent() {
+        return PromptReasoning.#LATEST?.partialPrefillContent || '';
     }
 
     constructor() {
@@ -715,6 +723,10 @@ export class PromptReasoning {
         this.prefixDuration = null;
         /** @type {boolean} */
         this.prefixIncomplete = false;
+        /** @type {string} Reasoning text prefilled into the request by partial mode */
+        this.partialPrefillReasoning = '';
+        /** @type {string} Message text prefilled into the request by partial mode */
+        this.partialPrefillContent = '';
     }
 
     /**
